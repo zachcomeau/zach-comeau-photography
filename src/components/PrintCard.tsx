@@ -10,19 +10,23 @@ export function PrintCard({ item }: PrintCardProps) {
   return (
     <li className="flex flex-col gap-4 border-b border-border py-6 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-4">
-        <div className="relative h-20 w-28 shrink-0 overflow-hidden bg-border">
+        <Link
+          href={`/prints/${item.slug}`}
+          className="group relative block h-20 w-28 shrink-0 overflow-hidden bg-border"
+          aria-label={`View print: ${item.title}`}
+        >
           {item.imageSrc ? (
             <Image
               src={item.imageSrc}
               alt={item.altText ?? item.title}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
               sizes="112px"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-xs text-muted">—</div>
           )}
-        </div>
+        </Link>
         <div>
           <p className="font-heading text-[10px] tracking-[0.12em] text-muted">
             {item.category}

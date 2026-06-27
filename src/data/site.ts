@@ -4,6 +4,7 @@ export const siteConfig = {
     "Landscape and wildlife photography from New England. Prints made to order.",
   tagline:
     "Photographs from the mountains, forests, and wild places of New England.",
-  email: "hello@zachcomeauphotography.com",
-  instagram: "https://instagram.com/",
+  email: "hello@zachcomeau.com",
+  instagram: "https://www.instagram.com/zach_comeau_",
+  instagramHandle: "zach_comeau_",
 } as const;

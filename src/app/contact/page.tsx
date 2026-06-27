@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { siteConfig } from "@/data/site";
 
@@ -30,7 +29,7 @@ export default function ContactPage() {
             rel="noopener noreferrer"
             className="text-accent hover:underline"
           >
-            @zachcomeauphotography
+            @{siteConfig.instagramHandle}
           </a>
         </p>
       </div>
