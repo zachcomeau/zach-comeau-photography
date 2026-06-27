@@ -1,0 +1,90 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getBySlug } from "@/data/gallery";
+import { siteConfig } from "@/data/site";
+
+type ProductPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+function getPrintDescription(item: NonNullable<ReturnType<typeof getBySlug>>): string {
+  return item.caption ?? item.altText ?? `${item.title} — fine art print by ${siteConfig.name}`;
+}
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const item = getBySlug(slug);
+  if (!item) return { title: "Print not found" };
+
+  const description = getPrintDescription(item);
+
+  return {
+    title: item.title,
+    description,
+    openGraph: {
+      title: `${item.title} · ${siteConfig.name}`,
+      description,
+      images: item.imageSrc ? [{ url: item.imageSrc, alt: item.altText ?? item.title }] : undefined,
+    },
+  };
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
+  const { slug } = await params;
+  const item = getBySlug(slug);
+
+  if (!item || !item.inStore) notFound();
+
+  return (
+    <div className="mx-auto max-w-6xl px-6 py-16">
+      <Link
+        href="/prints"
+        className="font-heading text-xs tracking-[0.14em] text-muted hover:text-accent"
+      >
+        ← Back to prints
+      </Link>
+      <div className="mt-8 grid gap-12 lg:grid-cols-2">
+        <div className="relative aspect-[4/3] bg-border">
+          {item.imageSrc ? (
+            <Image
+              src={item.imageSrc}
+              alt={item.altText ?? item.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              priority
+            />
+          ) : null}
+        </div>
+        <div>
+          <p className="font-heading text-xs text-muted">{item.category}</p>
+          <h1 className="font-heading mt-3 text-4xl text-foreground sm:text-5xl">{item.title}</h1>
+          {item.location ? (
+            <p className="mt-2 text-sm text-muted">{item.location}</p>
+          ) : null}
+          {item.featured ? (
+            <span className="mt-4 inline-block bg-highlight px-2 py-0.5 font-heading text-[10px] tracking-[0.1em] text-foreground">
+              Featured print
+            </span>
+          ) : null}
+          <p className="mt-6 text-base leading-7 text-muted">
+            {getPrintDescription(item)}
+          </p>
+          <p className="mt-4 text-sm text-muted">
+            Stripe checkout and size options are coming next. Prints are made to order on archival
+            paper.
+          </p>
+          <button
+            type="button"
+            disabled
+            className="mt-8 cursor-not-allowed bg-border px-6 py-3 font-heading text-xs tracking-[0.14em] text-muted"
+          >
+            Buy print — coming soon
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
