@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GalleryItem } from "@/data/gallery";
 
 type LightboxProps = {
@@ -11,8 +11,11 @@ type LightboxProps = {
   onClose: () => void;
 };
 
+const SWIPE_THRESHOLD_PX = 50;
+
 export function Lightbox({ items, initialIndex, onClose }: LightboxProps) {
   const [index, setIndex] = useState(initialIndex);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const item = items[index];
 
   const goPrev = useCallback(() => {
@@ -22,6 +25,26 @@ export function Lightbox({ items, initialIndex, onClose }: LightboxProps) {
   const goNext = useCallback(() => {
     setIndex((current) => (current < items.length - 1 ? current + 1 : 0));
   }, [items.length]);
+
+  const handleTouchStart = (event: React.TouchEvent) => {
+    const touch = event.changedTouches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX) return;
+    if (Math.abs(deltaX) < Math.abs(deltaY)) return;
+
+    if (deltaX > 0) goPrev();
+    else goNext();
+  };
 
   useEffect(() => {
     setIndex(initialIndex);
@@ -66,7 +89,7 @@ export function Lightbox({ items, initialIndex, onClose }: LightboxProps) {
           event.stopPropagation();
           goPrev();
         }}
-        className="absolute left-2 top-1/2 z-10 hidden -translate-y-1/2 px-3 py-2 font-heading text-xs tracking-[0.14em] text-background/80 hover:text-background sm:block"
+        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 px-3 py-2 font-heading text-xs tracking-[0.14em] text-background/80 hover:text-background sm:left-4"
         aria-label="Previous image"
       >
         Prev
@@ -78,7 +101,7 @@ export function Lightbox({ items, initialIndex, onClose }: LightboxProps) {
           event.stopPropagation();
           goNext();
         }}
-        className="absolute right-2 top-1/2 z-10 hidden -translate-y-1/2 px-3 py-2 font-heading text-xs tracking-[0.14em] text-background/80 hover:text-background sm:block"
+        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 px-3 py-2 font-heading text-xs tracking-[0.14em] text-background/80 hover:text-background sm:right-4"
         aria-label="Next image"
       >
         Next
@@ -88,7 +111,11 @@ export function Lightbox({ items, initialIndex, onClose }: LightboxProps) {
         className="relative flex max-h-[85vh] w-full max-w-5xl flex-col"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative mx-auto w-full">
+        <div
+          className="relative mx-auto w-full touch-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {item.imageSrc ? (
             <div className="relative inline-block max-h-[70vh] w-full">
               <Image
