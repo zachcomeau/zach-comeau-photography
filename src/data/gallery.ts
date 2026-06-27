@@ -73,7 +73,7 @@ export const galleryItems: GalleryItem[] = [
   },
   {
     id: "5",
-    title: "11/19/25 - Auora Borealis, MA",
+    title: "11/19/25 - Aurora Borealis, MA",
     slug: "cowee-pond-northern-lights-massachusetts",
     category: "landscape",
     location: "Gardner MA",
