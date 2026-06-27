@@ -14,11 +14,13 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Project structure
 
 ```
+data/
+  photoLogCsv.csv   # Source of truth for photo metadata (edit here first)
 src/
   app/              # Pages (each folder = a URL)
   components/       # Header, GalleryGrid, Lightbox, etc.
   data/
-    gallery.ts      # Photo metadata and visibility flags
+    gallery.ts      # Photo metadata synced from photoLogCsv.csv
     site.ts         # Site name, email, social links
 public/
   gallery/
@@ -28,13 +30,17 @@ public/
 
 ## CSV flags (gallery, store, featured)
 
-Each image in `src/data/gallery.ts` uses three flags:
+**Source of truth:** [`data/photoLogCsv.csv`](data/photoLogCsv.csv) — edit metadata and flags here, then sync into [`src/data/gallery.ts`](src/data/gallery.ts).
 
-| Flag | Meaning |
-|------|---------|
-| `featured` | Show on homepage (in gallery and/or store section) |
-| `inGallery` | Show in `/gallery` and eligible for homepage gallery section |
-| `inStore` | Show in `/prints` and eligible for homepage print store section |
+Each image uses three flags:
+
+| CSV column | `gallery.ts` field | Meaning |
+|------------|------------------|---------|
+| `featured` | `featured` | Show on homepage (gallery and/or store section) |
+| `store` | `inStore` | Show in `/prints` and homepage print store section |
+| `gallery` | `inGallery` | Show in `/gallery` and homepage gallery section |
+
+Use `y` or `n` for flag columns. The CSV header may include `categroy` (typo) — category is the first tag in that column (`wildlife` or `landscape`; if the first tag is `nature`, use the second tag).
 
 **Homepage previews (max 8 images, no duplicates):**
 
@@ -48,13 +54,13 @@ Each image in `src/data/gallery.ts` uses three flags:
 - `/gallery` — all `inGallery` images
 - `/prints` — all `inStore` images
 
-**CSV headers for import:**
+**CSV headers:**
 
 ```csv
-filename,title,category,location,caption,alt_text,featured,store,gallery
+filename,title,categroy,location,,caption,alt_text,keywords,featured ,store,gallery,sku,date_taken
 ```
 
-Use `y` or `n` for the three flag columns.
+**Sync workflow:** After editing `data/photoLogCsv.csv`, update matching rows in `src/data/gallery.ts` (title, location, caption, altText, category). Keep `slug`, `imageSrc`, flags, and row order aligned with the CSV. Filename `fall-foliage-hancock- trail-nh.jpg` maps to slug `fall-foliage-hancock-trail-nh`.
 
 ## Add your photos
 
@@ -102,7 +108,7 @@ Old `/shop`, `/galleries`, `/wildlife`, and `/landscapes` URLs redirect automati
 
 ## Next steps
 
-1. Update flags in `gallery.ts` or re-import from CSV
-2. Push to GitHub and deploy on Vercel
+1. Edit `data/photoLogCsv.csv`, then sync changes into `gallery.ts`
+2. Push to GitHub — Vercel rebuilds production automatically
 3. Add Stripe checkout
 4. Connect Printful for print fulfillment
