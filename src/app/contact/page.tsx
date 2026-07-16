@@ -32,6 +32,17 @@ export default function ContactPage() {
             @{siteConfig.instagramHandle}
           </a>
         </p>
+        <p>
+          Facebook:{" "}
+          <a
+            href={siteConfig.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent hover:underline"
+          >
+            {siteConfig.facebookHandle}
+          </a>
+        </p>
       </div>
     </div>
   );

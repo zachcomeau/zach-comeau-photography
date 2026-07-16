@@ -7,4 +7,6 @@ export const siteConfig = {
   email: "hello@zachcomeau.com",
   instagram: "https://www.instagram.com/zach_comeau_",
   instagramHandle: "zach_comeau_",
+  facebook: "https://www.facebook.com/zcomeau/",
+  facebookHandle: "zcomeau",
 } as const;
