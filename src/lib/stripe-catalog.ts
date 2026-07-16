@@ -25,13 +25,6 @@ export type ResolvedShipping = {
   stripePriceId: string;
 };
 
-function getDefaultPrice(product: Stripe.Product): Stripe.Price | null {
-  const price = product.default_price;
-  if (!price || typeof price === "string") return null;
-  if (!price.active || price.unit_amount == null) return null;
-  return price;
-}
-
 async function resolveProductPrice(
   stripe: Stripe,
   productId: string,
@@ -42,8 +35,17 @@ async function resolveProductPrice(
     const product = await stripe.products.retrieve(productId, {
       expand: ["default_price"],
     });
-    const price = getDefaultPrice(product);
-    if (!price || price.unit_amount == null) {
+
+    let price: Stripe.Price | null = null;
+    const defaultPrice = product.default_price;
+
+    if (typeof defaultPrice === "string") {
+      price = await stripe.prices.retrieve(defaultPrice);
+    } else if (defaultPrice && typeof defaultPrice === "object") {
+      price = defaultPrice;
+    }
+
+    if (!price || !price.active || price.unit_amount == null) {
       console.error(
         `Stripe product ${productId} has no active default price — it will not appear on the site.`,
       );
@@ -94,7 +96,7 @@ async function resolveOfferings(configs: PrintOffering[]): Promise<ResolvedOffer
 
 const getCachedActiveOfferings = unstable_cache(
   async () => resolveOfferings(getActiveOfferings()),
-  ["stripe-active-offerings-v3"],
+  ["stripe-active-offerings-v4"],
   { revalidate: 300 },
 );
 
