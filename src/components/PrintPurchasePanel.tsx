@@ -1,8 +1,40 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { ResolvedOffering, ResolvedShipping } from "@/lib/stripe-catalog";
 import { formatPrice } from "@/lib/format-price";
+import { siteConfig } from "@/data/site";
+
+function OrderContactNote({ className }: { className?: string }) {
+  return (
+    <p className={className}>
+      Message me on{" "}
+      <a
+        href={siteConfig.facebook}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-accent hover:underline"
+      >
+        Facebook
+      </a>
+      ,{" "}
+      <a
+        href={siteConfig.instagram}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-accent hover:underline"
+      >
+        Instagram
+      </a>
+      , or send me an email at{" "}
+      <a href={`mailto:${siteConfig.email}`} className="text-accent hover:underline">
+        {siteConfig.email}
+      </a>{" "}
+      to order this print.
+    </p>
+  );
+}
 
 type Medium = "print" | "canvas";
 
@@ -132,13 +164,7 @@ export function PrintPurchasePanel({
   if (offerings.length === 0) {
     return (
       <div className="mt-8 border border-border bg-background p-6">
-        <p className="text-sm text-muted">
-          Print pricing is being configured. Email{" "}
-          <a href="mailto:hello@zachcomeau.com" className="text-accent hover:underline">
-            hello@zachcomeau.com
-          </a>{" "}
-          to order this print.
-        </p>
+        <OrderContactNote className="text-sm text-muted" />
       </div>
     );
   }
@@ -207,13 +233,10 @@ export function PrintPurchasePanel({
       )}
 
       {selectedOffering && selectedOffering.priceCents == null ? (
-        <p className="mt-4 text-sm text-red-700">
-          This size is listed but pricing is not available yet. Please try another option or email{" "}
-          <a href="mailto:hello@zachcomeau.com" className="underline">
-            hello@zachcomeau.com
-          </a>
-          .
-        </p>
+        <div className="mt-4 text-sm text-red-700">
+          <p>This size is listed but pricing is not available yet.</p>
+          <OrderContactNote className="mt-1" />
+        </div>
       ) : null}
 
       <dl className="mt-6 space-y-2 border-t border-border pt-4 text-sm text-muted">
@@ -255,6 +278,14 @@ export function PrintPurchasePanel({
           Buy print — coming soon
         </button>
       )}
+
+      <p className="mt-4 text-xs leading-5 text-muted">
+        <span className="text-foreground">100% satisfaction guarantee.</span> Love it or send it
+        back within 30 days for a full refund of the print price.{" "}
+        <Link href="/guarantee" className="text-accent hover:underline">
+          Learn more
+        </Link>
+      </p>
 
       {sku ? (
         <p className="mt-3 font-heading text-[10px] tracking-[0.1em] text-muted">SKU {sku}</p>
