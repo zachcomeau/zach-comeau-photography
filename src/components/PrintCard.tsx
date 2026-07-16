@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { GalleryItem } from "@/data/gallery";
+import { formatPrice } from "@/lib/format-price";
 
 type PrintCardProps = {
   item: GalleryItem;
+  fromPriceCents?: number;
 };
 
-export function PrintCard({ item }: PrintCardProps) {
+export function PrintCard({ item, fromPriceCents }: PrintCardProps) {
   return (
     <li className="flex flex-col gap-4 border-b border-border py-6 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-4">
@@ -33,6 +35,9 @@ export function PrintCard({ item }: PrintCardProps) {
           </p>
           <h2 className="mt-1 text-lg text-foreground">{item.title}</h2>
           {item.location ? <p className="mt-0.5 text-sm text-muted">{item.location}</p> : null}
+          {fromPriceCents != null ? (
+            <p className="mt-0.5 text-sm text-muted">From {formatPrice(fromPriceCents)}</p>
+          ) : null}
         </div>
       </div>
       <Link

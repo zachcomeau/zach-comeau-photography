@@ -6,6 +6,9 @@ Landscape and wildlife photography portfolio and print shop, built with Next.js.
 
 ```powershell
 cd C:\Users\Zachj\Projects\photography-site
+cp .env.example .env.local   # add your Stripe keys
+npm install
+npm run sync:data
 npm run dev
 ```
 
@@ -15,84 +18,86 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```
 data/
-  photoLogCsv.csv   # Source of truth for photo metadata (edit here first)
+  photoLogCsv.csv      # Photos, gallery/store flags
+  printOfferings.csv   # One row per image × size (Stripe Product ID + label + description)
+  storeConfig.csv      # Shipping product, checkout toggle
+scripts/
+  sync-data.mjs        # Regenerates gallery.ts and products.ts
 src/
-  app/              # Pages (each folder = a URL)
-  components/       # Header, GalleryGrid, Lightbox, etc.
-  data/
-    gallery.ts      # Photo metadata synced from photoLogCsv.csv
-    site.ts         # Site name, email, social links
-public/
-  gallery/
-    landscapes/     # Landscape JPEGs
-    wildlife/       # Wildlife JPEGs
+  app/prints/[slug]/   # Product page + size picker + checkout
+  app/api/checkout/    # Stripe Checkout sessions
+  data/gallery.ts      # @generated
+  data/products.ts     # @generated offerings
+  lib/stripe-catalog.ts
+public/gallery/
 ```
 
-## CSV flags (gallery, store, featured)
+## Data workflow (two sheets)
 
-**Source of truth:** [`data/photoLogCsv.csv`](data/photoLogCsv.csv) — edit metadata and flags here, then sync into [`src/data/gallery.ts`](src/data/gallery.ts).
+Edit CSVs in Excel, then:
 
-Each image uses three flags:
+```powershell
+npm run sync:data
+```
 
-| CSV column | `gallery.ts` field | Meaning |
-|------------|------------------|---------|
-| `featured` | `featured` | Show on homepage (gallery and/or store section) |
-| `store` | `inStore` | Show in `/prints` and homepage print store section |
-| `gallery` | `inGallery` | Show in `/gallery` and homepage gallery section |
+Commit the CSVs and generated TS files.
 
-Use `y` or `n` for flag columns. The CSV header may include `categroy` (typo) — category is the first tag in that column (`wildlife` or `landscape`; if the first tag is `nature`, use the second tag).
+### 1. `data/photoLogCsv.csv` — photos
 
-**Homepage previews (max 8 images, no duplicates):**
+| Column | Meaning |
+|--------|---------|
+| `filename` | Join key (e.g. `franconia-ridge-sunrise-mt-lafayette-wmnf.jpg`) |
+| `featured` | Homepage |
+| `store` | Show in `/prints` and product pages |
+| `gallery` | Show in `/gallery` |
 
-- Up to **4** images in the Print Store section (`featured` + `inStore`, CSV row order)
-- Up to **4** images in the Gallery section (`featured` + `inGallery`, excluding any already in the store section)
-- **Print Store picks first** when an image qualifies for both sections
-- Reorder rows in `gallery.ts` to change which images appear on the homepage
+Offerings are **not** listed on this sheet — they live in `printOfferings.csv`.
 
-**Full pages:**
+### 2. `data/printOfferings.csv` — shop options
 
-- `/gallery` — all `inGallery` images
-- `/prints` — all `inStore` images
-
-**CSV headers:**
+One row = one buyable option = one Stripe Product.
 
 ```csv
-filename,title,categroy,location,,caption,alt_text,keywords,featured ,store,gallery,sku,date_taken
+filename,Label,description,id,active
+franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 20x30 Print,Fine Art Prints...,prod_xxx,y
 ```
 
-**Sync workflow:** After editing `data/photoLogCsv.csv`, update matching rows in `src/data/gallery.ts` (title, location, caption, altText, category). Keep `slug`, `imageSrc`, flags, and row order aligned with the CSV. Filename `fall-foliage-hancock- trail-nh.jpg` maps to slug `fall-foliage-hancock-trail-nh`.
+| Column | Meaning |
+|--------|---------|
+| `filename` | Matches photo (with or without `.jpg`) |
+| `Label` | Size option text on the product page (e.g. `8x12 Print`) |
+| `description` | Materials copy when that option is selected |
+| `id` | Stripe Product ID (`prod_...`) — **price comes from Stripe** |
+| `active` | `y` / `n` |
+| `medium` | `print` or `canvas` — groups options after the customer picks a medium |
 
-## Add your photos
+Same filename on multiple rows → multiple options on that product page.
 
-### 1. Export from Lightroom
+### 3. `data/storeConfig.csv`
 
-- **Long edge:** 2500 px
-- **Format:** JPEG
-- **Quality:** 75–80
-
-### 2. Save files
-
+```csv
+key,value
+stripe_shipping_product_id,prod_shipping
+checkout_enabled,n
+ships_to,US
+turnaround_days,7-14
 ```
-public/gallery/landscapes/your-slug.jpg
-public/gallery/wildlife/your-slug.jpg
-```
 
-### 3. Update gallery data
+Shipping Product in Stripe should be **$8.99** with a default price. Set `checkout_enabled` to `y` when ready.
 
-```ts
-{
-  id: "20",
-  title: "Your Photo Title",
-  slug: "your-photo-title",
-  category: "landscape",
-  location: "White Mountains, NH",
-  altText: "Description for SEO and accessibility",
-  imageSrc: "/gallery/landscapes/your-photo-title.jpg",
-  featured: false,
-  inGallery: true,
-  inStore: true,
-}
-```
+## Stripe setup
+
+1. Create one **Product per image × size** (e.g. `Franconia Ridge Sunrise - 20x30 Canvas`) with a default one-time Price.
+2. Paste each `prod_...` into `printOfferings.csv`.
+3. Create one **Shipping** Product at $8.99 → `storeConfig.csv`.
+4. Env vars (see `.env.example`):
+   - `STRIPE_SECRET_KEY`
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+   - `NEXT_PUBLIC_SITE_URL`
+
+### Change prices
+
+Stripe Dashboard → Product → new default Price. Site picks it up within ~5 minutes (cached). No CSV price column.
 
 ## Routes
 
@@ -101,14 +106,23 @@ public/gallery/wildlife/your-slug.jpg
 | Home | `/` |
 | Gallery | `/gallery` |
 | Prints | `/prints` |
+| Product | `/prints/[slug]` |
+| Order confirmed | `/prints/success` |
+| Checkout cancelled | `/prints/cancelled` |
 | About | `/about` |
 | Contact | `/contact` |
 
-Old `/shop`, `/galleries`, `/wildlife`, and `/landscapes` URLs redirect automatically.
+## Fulfillment (v1)
 
-## Next steps
+1. Stripe emails you when payment succeeds (receipt shows Product name = image + size).
+2. Order from your print lab (drop-ship or QC then ship).
+3. Email the customer at `hello@zachcomeau.com` with tracking if needed.
 
-1. Edit `data/photoLogCsv.csv`, then sync changes into `gallery.ts`
-2. Push to GitHub — Vercel rebuilds production automatically
-3. Add Stripe checkout
-4. Connect Printful for print fulfillment
+## Go-live checklist
+
+- [ ] Offerings rows + real `prod_...` IDs for each shop image
+- [ ] Shipping Product at $8.99 in `storeConfig.csv`
+- [ ] `npm run sync:data` and deploy
+- [ ] Env vars on Vercel
+- [ ] Test order
+- [ ] `checkout_enabled=y`

@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PrintPurchasePanel } from "@/components/PrintPurchasePanel";
 import { getBySlug } from "@/data/gallery";
+import { storeConfig } from "@/data/products";
 import { siteConfig } from "@/data/site";
+import { getResolvedOfferingsForSlug, getShippingPrice } from "@/lib/stripe-catalog";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -37,6 +40,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!item || !item.inStore) notFound();
 
+  const [offerings, shipping] = await Promise.all([
+    getResolvedOfferingsForSlug(slug),
+    getShippingPrice(),
+  ]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
       <Link
@@ -69,20 +77,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
               Featured print
             </span>
           ) : null}
-          <p className="mt-6 text-base leading-7 text-muted">
-            {getPrintDescription(item)}
-          </p>
-          <p className="mt-4 text-sm text-muted">
-            Stripe checkout and size options are coming next. Prints are made to order on archival
-            paper.
-          </p>
-          <button
-            type="button"
-            disabled
-            className="mt-8 cursor-not-allowed bg-border px-6 py-3 font-heading text-xs tracking-[0.14em] text-muted"
-          >
-            Buy print — coming soon
-          </button>
+          <p className="mt-6 text-base leading-7 text-muted">{getPrintDescription(item)}</p>
+          <PrintPurchasePanel
+            slug={item.slug}
+            title={item.title}
+            sku={item.sku}
+            printNote={item.printNote}
+            offerings={offerings}
+            shipping={shipping}
+            checkoutEnabled={storeConfig.checkoutEnabled}
+            shipsTo={storeConfig.shipsTo}
+            turnaroundDays={storeConfig.turnaroundDays}
+          />
         </div>
       </div>
     </div>
