@@ -335,8 +335,10 @@ function main() {
     turnaroundDays: storeConfigMap.turnaround_days ?? "7-14",
   };
 
-  const galleryItems = photoRows.map((row) => {
-    const filename = row.filename;
+  const galleryItems = photoRows
+    .filter((row) => rowField(row, "filename"))
+    .map((row) => {
+    const filename = rowField(row, "filename");
     const slug = filenameToSlug(filename);
     const category = parseCategory(row.categroy ?? "");
 
@@ -363,7 +365,8 @@ function main() {
     };
   });
 
-  const offerings = offeringRows.map((row, index) => {
+  const offerings = offeringRows
+    .map((row, index) => {
     const filename = rowField(row, "filename");
     const slug = filenameToSlug(filename);
     const stripeProductId = rowField(row, "id", "stripe_product_id");
@@ -378,8 +381,12 @@ function main() {
           : "print";
 
     if (!slug || !stripeProductId || !label) {
-      console.error(`Error: printOfferings.csv row ${index + 2} is missing filename, Label, or id`);
-      process.exit(1);
+      if (filename || label || stripeProductId) {
+        console.warn(
+          `Warning: skipping printOfferings.csv row ${index + 2} — needs filename, Label, and id`,
+        );
+      }
+      return null;
     }
 
     return {
@@ -391,7 +398,8 @@ function main() {
       stripeProductId,
       active: isYes(row.active ?? "y"),
     };
-  });
+  })
+    .filter(Boolean);
 
   const galleryTs = generateGalleryTs(galleryItems);
   const productsTs = generateProductsTs(offerings, storeConfig, galleryItems);

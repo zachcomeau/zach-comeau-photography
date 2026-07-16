@@ -63,6 +63,42 @@ export const printOfferings: PrintOffering[] = [
     medium: "canvas",
     stripeProductId: "prod_UtaASU9VRlJGqP",
     active: true,
+  },
+  {
+    id: "prod_UtgFQpynA3vJhK",
+    slug: "view-of-bondcliff-from-west-bond-nh",
+    label: "View of Bondcliff from West Bond - 12x24 Print",
+    description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
+    medium: "print",
+    stripeProductId: "prod_UtgFQpynA3vJhK",
+    active: true,
+  },
+  {
+    id: "prod_UtgGg6AAJ34O1G",
+    slug: "view-of-bondcliff-from-west-bond-nh",
+    label: "View of Bondcliff from West Bond - 10x20 Print",
+    description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
+    medium: "print",
+    stripeProductId: "prod_UtgGg6AAJ34O1G",
+    active: true,
+  },
+  {
+    id: "prod_UtgHEWcQAxHqwL",
+    slug: "view-of-bondcliff-from-west-bond-nh",
+    label: "View of Bondcliff from West Bond - 15x30 Canvas",
+    description: "Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.",
+    medium: "canvas",
+    stripeProductId: "prod_UtgHEWcQAxHqwL",
+    active: true,
+  },
+  {
+    id: "prod_UtgItKGOwk5ZnJ",
+    slug: "view-of-bondcliff-from-west-bond-nh",
+    label: "View of Bondcliff from West Bond - 10x20 Canvas",
+    description: "Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.",
+    medium: "canvas",
+    stripeProductId: "prod_UtgItKGOwk5ZnJ",
+    active: true,
   }
 ];
 
