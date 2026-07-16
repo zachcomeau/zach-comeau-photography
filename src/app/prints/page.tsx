@@ -4,6 +4,8 @@ import { PrintCard } from "@/components/PrintCard";
 import { getStoreItems } from "@/data/gallery";
 import { getFromPricesBySlug } from "@/lib/stripe-catalog";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Prints",
 };

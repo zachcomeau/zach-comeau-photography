@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import type Stripe from "stripe";
 import {
   getActiveOfferings,
@@ -14,8 +13,8 @@ export type ResolvedOffering = {
   label: string;
   description: string;
   medium: "print" | "canvas";
-  priceCents: number;
-  stripePriceId: string;
+  priceCents: number | null;
+  stripePriceId: string | null;
   stripeProductId: string;
   active: boolean;
 };
@@ -45,9 +44,22 @@ async function resolveProductPrice(
       price = defaultPrice;
     }
 
+    // Fallback: first active one-time price on the product
+    if (!price || !price.active || price.unit_amount == null) {
+      const listed = await stripe.prices.list({
+        product: productId,
+        active: true,
+        limit: 10,
+      });
+      price =
+        listed.data.find((entry) => entry.type === "one_time" && entry.unit_amount != null) ??
+        listed.data.find((entry) => entry.unit_amount != null) ??
+        null;
+    }
+
     if (!price || !price.active || price.unit_amount == null) {
       console.error(
-        `Stripe product ${productId} has no active default price — it will not appear on the site.`,
+        `Stripe product ${productId} has no usable price — offering still shown without checkout.`,
       );
       return null;
     }
@@ -62,18 +74,22 @@ async function resolveProductPrice(
   }
 }
 
-function sortByPrice(offerings: ResolvedOffering[]): ResolvedOffering[] {
-  return [...offerings].sort((a, b) => a.priceCents - b.priceCents);
+function sortOfferings(offerings: ResolvedOffering[]): ResolvedOffering[] {
+  return [...offerings].sort((a, b) => {
+    if (a.priceCents == null && b.priceCents == null) return a.label.localeCompare(b.label);
+    if (a.priceCents == null) return 1;
+    if (b.priceCents == null) return -1;
+    if (a.priceCents !== b.priceCents) return a.priceCents - b.priceCents;
+    return a.label.localeCompare(b.label);
+  });
 }
 
-async function resolveOfferings(configs: PrintOffering[]): Promise<ResolvedOffering[]> {
+async function attachStripePrices(configs: PrintOffering[]): Promise<ResolvedOffering[]> {
   const stripe = getStripe();
-  if (!stripe) return [];
 
   const resolved = await Promise.all(
     configs.map(async (config) => {
-      const price = await resolveProductPrice(stripe, config.stripeProductId);
-      if (!price) return null;
+      const price = stripe ? await resolveProductPrice(stripe, config.stripeProductId) : null;
 
       return {
         id: config.id,
@@ -81,66 +97,46 @@ async function resolveOfferings(configs: PrintOffering[]): Promise<ResolvedOffer
         label: config.label,
         description: config.description,
         medium: config.medium,
-        priceCents: price.priceCents,
-        stripePriceId: price.stripePriceId,
+        priceCents: price?.priceCents ?? null,
+        stripePriceId: price?.stripePriceId ?? null,
         stripeProductId: config.stripeProductId,
         active: config.active,
       } satisfies ResolvedOffering;
     }),
   );
 
-  return sortByPrice(
-    resolved.filter((offering): offering is ResolvedOffering => offering !== null),
-  );
+  return sortOfferings(resolved);
 }
-
-const getCachedActiveOfferings = unstable_cache(
-  async () => resolveOfferings(getActiveOfferings()),
-  ["stripe-active-offerings-v4"],
-  { revalidate: 300 },
-);
-
-const getCachedShipping = unstable_cache(
-  async (): Promise<ResolvedShipping | null> => {
-    const stripe = getStripe();
-    if (!stripe) return null;
-
-    const price = await resolveProductPrice(stripe, storeConfig.stripeShippingProductId);
-    if (!price) return null;
-
-    return price;
-  },
-  ["stripe-shipping-price"],
-  { revalidate: 300 },
-);
 
 export { formatPrice } from "@/lib/format-price";
 
-export async function getResolvedOfferings(): Promise<ResolvedOffering[]> {
-  return getCachedActiveOfferings();
-}
-
+/** Always returns every active CSV offering for the slug — never drops rows if Stripe fails. */
 export async function getResolvedOfferingsForSlug(slug: string): Promise<ResolvedOffering[]> {
-  const allowedIds = new Set(getOfferingsForSlug(slug).map((offering) => offering.id));
-  const offerings = await getCachedActiveOfferings();
-  return sortByPrice(offerings.filter((offering) => allowedIds.has(offering.id)));
+  const configs = getOfferingsForSlug(slug);
+  return attachStripePrices(configs);
 }
 
 export async function getShippingPrice(): Promise<ResolvedShipping | null> {
-  return getCachedShipping();
+  const stripe = getStripe();
+  if (!stripe) return null;
+
+  const price = await resolveProductPrice(stripe, storeConfig.stripeShippingProductId);
+  if (!price) return null;
+
+  return price;
 }
 
 export async function getFromPricesBySlug(
   slugs: string[],
 ): Promise<Record<string, number>> {
-  const offerings = await getCachedActiveOfferings();
+  const offerings = await attachStripePrices(getActiveOfferings());
   const pricesBySlug: Record<string, number> = {};
 
   for (const slug of slugs) {
     const allowedIds = new Set(getOfferingsForSlug(slug).map((offering) => offering.id));
     const prices = offerings
-      .filter((offering) => allowedIds.has(offering.id))
-      .map((offering) => offering.priceCents);
+      .filter((offering) => allowedIds.has(offering.id) && offering.priceCents != null)
+      .map((offering) => offering.priceCents as number);
 
     if (prices.length > 0) {
       pricesBySlug[slug] = Math.min(...prices);
@@ -156,9 +152,13 @@ export async function validateCheckoutSelection(
   stripePriceId: string,
 ): Promise<ResolvedOffering | null> {
   const offerings = await getResolvedOfferingsForSlug(slug);
-  return (
-    offerings.find(
-      (entry) => entry.id === offeringId && entry.stripePriceId === stripePriceId,
-    ) ?? null
+  const offering = offerings.find(
+    (entry) =>
+      entry.id === offeringId &&
+      entry.stripePriceId === stripePriceId &&
+      entry.priceCents != null &&
+      entry.stripePriceId != null,
   );
+
+  return offering ?? null;
 }

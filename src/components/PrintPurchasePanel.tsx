@@ -49,9 +49,16 @@ export function PrintPurchasePanel({
 
   const mediumOfferings = useMemo(
     () =>
-      offerings
+      [...offerings]
         .filter((offering) => offering.medium === selectedMedium)
-        .sort((a, b) => a.priceCents - b.priceCents),
+        .sort((a, b) => {
+          if (a.priceCents == null && b.priceCents == null) {
+            return a.label.localeCompare(b.label);
+          }
+          if (a.priceCents == null) return 1;
+          if (b.priceCents == null) return -1;
+          return a.priceCents - b.priceCents;
+        }),
     [offerings, selectedMedium],
   );
 
@@ -80,13 +87,18 @@ export function PrintPurchasePanel({
     [selectedId, mediumOfferings],
   );
 
+  const canCheckout =
+    Boolean(selectedOffering?.stripePriceId) &&
+    selectedOffering?.priceCents != null &&
+    Boolean(shipping);
+
   const totalCents =
-    selectedOffering && shipping
+    selectedOffering?.priceCents != null && shipping
       ? selectedOffering.priceCents + shipping.priceCents
       : selectedOffering?.priceCents ?? null;
 
   async function handleCheckout() {
-    if (!selectedOffering || !checkoutEnabled) return;
+    if (!selectedOffering?.stripePriceId || !checkoutEnabled || !canCheckout) return;
 
     setIsLoading(true);
     setError(null);
@@ -181,7 +193,9 @@ export function PrintPurchasePanel({
               />
               <span className="text-sm text-foreground">{offering.label}</span>
             </span>
-            <span className="text-sm text-muted">{formatPrice(offering.priceCents)}</span>
+            <span className="text-sm text-muted">
+              {offering.priceCents != null ? formatPrice(offering.priceCents) : "Price pending"}
+            </span>
           </label>
         ))}
       </fieldset>
@@ -195,6 +209,16 @@ export function PrintPurchasePanel({
           Made to order from my original capture.
         </p>
       )}
+
+      {selectedOffering && selectedOffering.priceCents == null ? (
+        <p className="mt-4 text-sm text-red-700">
+          This size is listed but pricing is not available yet. Please try another option or email{" "}
+          <a href="mailto:hello@zachcomeau.com" className="underline">
+            hello@zachcomeau.com
+          </a>
+          .
+        </p>
+      ) : null}
 
       <dl className="mt-6 space-y-2 border-t border-border pt-4 text-sm text-muted">
         {shipping ? (
@@ -221,7 +245,7 @@ export function PrintPurchasePanel({
         <button
           type="button"
           onClick={handleCheckout}
-          disabled={!selectedOffering || isLoading}
+          disabled={!canCheckout || isLoading}
           className="mt-6 w-full bg-accent px-6 py-3 font-heading text-xs tracking-[0.14em] text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? "Redirecting…" : `Buy print — ${title}`}

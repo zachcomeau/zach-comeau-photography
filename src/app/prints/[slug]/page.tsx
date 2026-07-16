@@ -8,6 +8,8 @@ import { storeConfig } from "@/data/products";
 import { siteConfig } from "@/data/site";
 import { getResolvedOfferingsForSlug, getShippingPrice } from "@/lib/stripe-catalog";
 
+export const dynamic = "force-dynamic";
+
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
 };

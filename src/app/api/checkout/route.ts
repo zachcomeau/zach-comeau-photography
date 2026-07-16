@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   const offering = await validateCheckoutSelection(slug, offeringId, stripePriceId);
-  if (!offering) {
+  if (!offering || !offering.stripePriceId) {
     return NextResponse.json({ error: "Invalid print selection." }, { status: 400 });
   }
 
