@@ -132,6 +132,22 @@ function rowField(row, ...keys) {
   return "";
 }
 
+function parsePriceDollars(raw) {
+  const cleaned = String(raw ?? "").replace(/[$,\s]/g, "").trim();
+  if (!cleaned) return null;
+  const value = Number(cleaned);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return Math.round(value * 100);
+}
+
+function offeringIdFor(slug, label) {
+  const suffix = label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `${slug}--${suffix}`;
+}
+
 function generateGalleryTs(items) {
   const itemBlocks = items.map((item, index) => {
     const lines = [
@@ -250,7 +266,8 @@ function generateProductsTs(offerings, storeConfig, galleryItems) {
     label: "${escapeString(offering.label)}",
     description: "${escapeString(offering.description)}",
     medium: "${escapeString(offering.medium)}",
-    stripeProductId: "${escapeString(offering.stripeProductId)}",
+    priceCents: ${offering.priceCents},
+    stripeProductId: ${offering.stripeProductId ? `"${escapeString(offering.stripeProductId)}"` : "undefined"},
     active: ${offering.active},
   }`,
   );
@@ -280,7 +297,8 @@ export type PrintOffering = {
   label: string;
   description: string;
   medium: "print" | "canvas";
-  stripeProductId: string;
+  priceCents: number;
+  stripeProductId?: string;
   active: boolean;
 };
 
@@ -372,6 +390,7 @@ function main() {
     const stripeProductId = rowField(row, "id", "stripe_product_id");
     const label = rowField(row, "Label", "label");
     const description = rowField(row, "description");
+    const priceCents = parsePriceDollars(row.price);
     const mediumRaw = rowField(row, "medium").toLowerCase();
     const medium =
       mediumRaw === "canvas" || mediumRaw === "print"
@@ -380,22 +399,23 @@ function main() {
           ? "canvas"
           : "print";
 
-    if (!slug || !stripeProductId || !label) {
-      if (filename || label || stripeProductId) {
+    if (!slug || !label || priceCents == null) {
+      if (filename || label || stripeProductId || row.price) {
         console.warn(
-          `Warning: skipping printOfferings.csv row ${index + 2} — needs filename, Label, and id`,
+          `Warning: skipping printOfferings.csv row ${index + 2} — needs filename, Label, and price`,
         );
       }
       return null;
     }
 
     return {
-      id: stripeProductId,
+      id: offeringIdFor(slug, label),
       slug,
       label,
       description,
       medium,
-      stripeProductId,
+      priceCents,
+      stripeProductId: stripeProductId || undefined,
       active: isYes(row.active ?? "y"),
     };
   })

@@ -6,7 +6,6 @@ import { getShippingPrice, validateCheckoutSelection } from "@/lib/stripe-catalo
 type CheckoutBody = {
   slug?: string;
   offeringId?: string;
-  stripePriceId?: string;
 };
 
 function getSiteUrl(request: Request): string {
@@ -30,8 +29,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const { slug, offeringId, stripePriceId } = body;
-  if (!slug || !offeringId || !stripePriceId) {
+  const { slug, offeringId } = body;
+  if (!slug || !offeringId) {
     return NextResponse.json({ error: "Missing checkout details." }, { status: 400 });
   }
 
@@ -40,8 +39,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Print not found." }, { status: 404 });
   }
 
-  const offering = await validateCheckoutSelection(slug, offeringId, stripePriceId);
-  if (!offering || !offering.stripePriceId) {
+  const offering = validateCheckoutSelection(slug, offeringId);
+  if (!offering) {
     return NextResponse.json({ error: "Invalid print selection." }, { status: 400 });
   }
 
@@ -56,7 +55,17 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
-        { price: offering.stripePriceId, quantity: 1 },
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: offering.label,
+              description: offering.description || item.title,
+            },
+            unit_amount: offering.priceCents,
+          },
+          quantity: 1,
+        },
         { price: shipping.stripePriceId, quantity: 1 },
       ],
       shipping_address_collection: {
@@ -68,7 +77,7 @@ export async function POST(request: Request) {
         offeringLabel: offering.label,
         title: item.title,
         sku: item.sku ?? "",
-        stripeProductId: offering.stripeProductId,
+        stripeProductId: offering.stripeProductId ?? "",
       },
       success_url: `${siteUrl}/prints/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/prints/cancelled`,

@@ -1,4 +1,3 @@
-import type Stripe from "stripe";
 import {
   getActiveOfferings,
   getOfferingsForSlug,
@@ -13,9 +12,8 @@ export type ResolvedOffering = {
   label: string;
   description: string;
   medium: "print" | "canvas";
-  priceCents: number | null;
-  stripePriceId: string | null;
-  stripeProductId: string;
+  priceCents: number;
+  stripeProductId?: string;
   active: boolean;
 };
 
@@ -24,28 +22,49 @@ export type ResolvedShipping = {
   stripePriceId: string;
 };
 
-async function resolveProductPrice(
-  stripe: Stripe,
+function sortOfferings(offerings: ResolvedOffering[]): ResolvedOffering[] {
+  return [...offerings].sort((a, b) => {
+    if (a.priceCents !== b.priceCents) return a.priceCents - b.priceCents;
+    return a.label.localeCompare(b.label);
+  });
+}
+
+function resolveOffering(config: PrintOffering): ResolvedOffering {
+  return {
+    id: config.id,
+    slug: config.slug,
+    label: config.label,
+    description: config.description,
+    medium: config.medium,
+    priceCents: config.priceCents,
+    stripeProductId: config.stripeProductId,
+    active: config.active,
+  };
+}
+
+export { formatPrice } from "@/lib/format-price";
+
+export function getResolvedOfferingsForSlug(slug: string): ResolvedOffering[] {
+  return sortOfferings(getOfferingsForSlug(slug).map(resolveOffering));
+}
+
+async function resolveStripeShippingPrice(
   productId: string,
 ): Promise<{ priceCents: number; stripePriceId: string } | null> {
-  if (!productId || productId.startsWith("prod_placeholder")) return null;
+  const stripe = getStripe();
+  if (!stripe || !productId) return null;
 
   try {
     const product = await stripe.products.retrieve(productId, {
       expand: ["default_price"],
     });
 
-    let price: Stripe.Price | null = null;
-    const defaultPrice = product.default_price;
-
-    if (typeof defaultPrice === "string") {
-      price = await stripe.prices.retrieve(defaultPrice);
-    } else if (defaultPrice && typeof defaultPrice === "object") {
-      price = defaultPrice;
+    let price = product.default_price;
+    if (typeof price === "string") {
+      price = await stripe.prices.retrieve(price);
     }
 
-    // Fallback: first active one-time price on the product
-    if (!price || !price.active || price.unit_amount == null) {
+    if (!price || typeof price === "string" || !price.active || price.unit_amount == null) {
       const listed = await stripe.prices.list({
         product: productId,
         active: true,
@@ -57,86 +76,30 @@ async function resolveProductPrice(
         null;
     }
 
-    if (!price || !price.active || price.unit_amount == null) {
-      console.error(
-        `Stripe product ${productId} has no usable price — offering still shown without checkout.`,
-      );
-      return null;
-    }
+    if (!price || price.unit_amount == null) return null;
 
     return {
       priceCents: price.unit_amount,
       stripePriceId: price.id,
     };
   } catch (error) {
-    console.error(`Failed to resolve Stripe product ${productId}:`, error);
+    console.error(`Failed to resolve Stripe shipping product ${productId}:`, error);
     return null;
   }
 }
 
-function sortOfferings(offerings: ResolvedOffering[]): ResolvedOffering[] {
-  return [...offerings].sort((a, b) => {
-    if (a.priceCents == null && b.priceCents == null) return a.label.localeCompare(b.label);
-    if (a.priceCents == null) return 1;
-    if (b.priceCents == null) return -1;
-    if (a.priceCents !== b.priceCents) return a.priceCents - b.priceCents;
-    return a.label.localeCompare(b.label);
-  });
-}
-
-async function attachStripePrices(configs: PrintOffering[]): Promise<ResolvedOffering[]> {
-  const stripe = getStripe();
-
-  const resolved = await Promise.all(
-    configs.map(async (config) => {
-      const price = stripe ? await resolveProductPrice(stripe, config.stripeProductId) : null;
-
-      return {
-        id: config.id,
-        slug: config.slug,
-        label: config.label,
-        description: config.description,
-        medium: config.medium,
-        priceCents: price?.priceCents ?? null,
-        stripePriceId: price?.stripePriceId ?? null,
-        stripeProductId: config.stripeProductId,
-        active: config.active,
-      } satisfies ResolvedOffering;
-    }),
-  );
-
-  return sortOfferings(resolved);
-}
-
-export { formatPrice } from "@/lib/format-price";
-
-/** Always returns every active CSV offering for the slug — never drops rows if Stripe fails. */
-export async function getResolvedOfferingsForSlug(slug: string): Promise<ResolvedOffering[]> {
-  const configs = getOfferingsForSlug(slug);
-  return attachStripePrices(configs);
-}
-
 export async function getShippingPrice(): Promise<ResolvedShipping | null> {
-  const stripe = getStripe();
-  if (!stripe) return null;
-
-  const price = await resolveProductPrice(stripe, storeConfig.stripeShippingProductId);
-  if (!price) return null;
-
-  return price;
+  return resolveStripeShippingPrice(storeConfig.stripeShippingProductId);
 }
 
-export async function getFromPricesBySlug(
-  slugs: string[],
-): Promise<Record<string, number>> {
-  const offerings = await attachStripePrices(getActiveOfferings());
+export function getFromPricesBySlug(slugs: string[]): Record<string, number> {
+  const offerings = getActiveOfferings();
   const pricesBySlug: Record<string, number> = {};
 
   for (const slug of slugs) {
-    const allowedIds = new Set(getOfferingsForSlug(slug).map((offering) => offering.id));
     const prices = offerings
-      .filter((offering) => allowedIds.has(offering.id) && offering.priceCents != null)
-      .map((offering) => offering.priceCents as number);
+      .filter((offering) => offering.slug === slug)
+      .map((offering) => offering.priceCents);
 
     if (prices.length > 0) {
       pricesBySlug[slug] = Math.min(...prices);
@@ -146,19 +109,10 @@ export async function getFromPricesBySlug(
   return pricesBySlug;
 }
 
-export async function validateCheckoutSelection(
+export function validateCheckoutSelection(
   slug: string,
   offeringId: string,
-  stripePriceId: string,
-): Promise<ResolvedOffering | null> {
-  const offerings = await getResolvedOfferingsForSlug(slug);
-  const offering = offerings.find(
-    (entry) =>
-      entry.id === offeringId &&
-      entry.stripePriceId === stripePriceId &&
-      entry.priceCents != null &&
-      entry.stripePriceId != null,
-  );
-
+): ResolvedOffering | null {
+  const offering = getResolvedOfferingsForSlug(slug).find((entry) => entry.id === offeringId);
   return offering ?? null;
 }

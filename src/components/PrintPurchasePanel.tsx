@@ -88,7 +88,6 @@ export function PrintPurchasePanel({
   );
 
   const canCheckout =
-    Boolean(selectedOffering?.stripePriceId) &&
     selectedOffering?.priceCents != null &&
     Boolean(shipping);
 
@@ -98,7 +97,7 @@ export function PrintPurchasePanel({
       : selectedOffering?.priceCents ?? null;
 
   async function handleCheckout() {
-    if (!selectedOffering?.stripePriceId || !checkoutEnabled || !canCheckout) return;
+    if (!selectedOffering || !checkoutEnabled || !canCheckout) return;
 
     setIsLoading(true);
     setError(null);
@@ -110,7 +109,6 @@ export function PrintPurchasePanel({
         body: JSON.stringify({
           slug,
           offeringId: selectedOffering.id,
-          stripePriceId: selectedOffering.stripePriceId,
         }),
       });
 
@@ -193,9 +191,7 @@ export function PrintPurchasePanel({
               />
               <span className="text-sm text-foreground">{offering.label}</span>
             </span>
-            <span className="text-sm text-muted">
-              {offering.priceCents != null ? formatPrice(offering.priceCents) : "Price pending"}
-            </span>
+            <span className="text-sm text-muted">{formatPrice(offering.priceCents)}</span>
           </label>
         ))}
       </fieldset>

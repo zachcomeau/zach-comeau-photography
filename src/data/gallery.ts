@@ -32,7 +32,7 @@ export const galleryItems: GalleryItem[] = [
     imageSrc: "/gallery/wildlife/8-point-buck-upstate-ny.jpg",
     featured: true,
     inGallery: true,
-    inStore: true,
+    inStore: false,
   },
   {
     id: "2",
@@ -104,7 +104,7 @@ export const galleryItems: GalleryItem[] = [
     imageSrc: "/gallery/landscapes/fall-foliage-hancock-trail-nh.jpg",
     featured: true,
     inGallery: true,
-    inStore: true,
+    inStore: false,
   },
   {
     id: "8",
@@ -152,7 +152,7 @@ export const galleryItems: GalleryItem[] = [
     imageSrc: "/gallery/landscapes/millers-river-sunrise-massachusetts.jpg",
     featured: true,
     inGallery: true,
-    inStore: true,
+    inStore: false,
   },
   {
     id: "12",
@@ -200,7 +200,7 @@ export const galleryItems: GalleryItem[] = [
     imageSrc: "/gallery/landscapes/sunrise-wachusett-meadow-mass-audobon.jpg",
     featured: true,
     inGallery: true,
-    inStore: true,
+    inStore: false,
   },
   {
     id: "16",
@@ -212,7 +212,7 @@ export const galleryItems: GalleryItem[] = [
     imageSrc: "/gallery/landscapes/view-of-bondcliff-from-west-bond-nh.jpg",
     featured: true,
     inGallery: true,
-    inStore: false,
+    inStore: true,
   },
   {
     id: "17",

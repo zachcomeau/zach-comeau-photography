@@ -1,10 +1,10 @@
-filename,Label,description,id,active,medium
-franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 20x30 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,prod_UtdLXpdehryKj5,y,Print
-franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 12x18 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,prod_UtdKMrS5nWCc0n,y,Print
-franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 8x12 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,prod_UtdJuBhkhlX3Hq,y,Print
-franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 12x18 Canvas,Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.,prod_Utd4pRZptJXXzx,y,Canvas
-franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 20x30 Canvas,Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.,prod_UtaASU9VRlJGqP,y,Canvas
-view-of-bondcliff-from-west-bond-nh,View of Bondcliff from West Bond - 12x24 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,prod_UtgFQpynA3vJhK,y,Print
-view-of-bondcliff-from-west-bond-nh,View of Bondcliff from West Bond - 10x20 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,prod_UtgGg6AAJ34O1G,y,Print
-view-of-bondcliff-from-west-bond-nh,View of Bondcliff from West Bond - 15x30 Canvas,Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.,prod_UtgHEWcQAxHqwL,y,Canvas
-view-of-bondcliff-from-west-bond-nh,View of Bondcliff from West Bond - 10x20 Canvas,Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.,prod_UtgItKGOwk5ZnJ,y,Canvas
+filename,Label,description,id,active,medium,price
+franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 20x30 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,prod_UtdLXpdehryKj5,y,Print,180.00
+franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 12x18 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,prod_UtdKMrS5nWCc0n,y,Print,70.00
+franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 8x12 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,prod_UtdJuBhkhlX3Hq,y,Print,18.00
+franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 12x18 Canvas,Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.,prod_Utd4pRZptJXXzx,y,Canvas,175.00
+franconia-ridge-sunrise-mt-lafayette-wmnf,Franconia Ridge Sunrise - 20x30 Canvas,Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.,prod_UtaASU9VRlJGqP,y,Canvas,275.00
+view-of-bondcliff-from-west-bond-nh,View of Bondcliff from West Bond - 12x24 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,,y,Print,90.00
+view-of-bondcliff-from-west-bond-nh,View of Bondcliff from West Bond - 10x20 Print,Fine Art Prints feature a subtle watercolor texture and a smooth matte finish,,y,Print,50.00
+view-of-bondcliff-from-west-bond-nh,View of Bondcliff from West Bond - 15x30 Canvas,Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.,,y,Canvas,250.00
+view-of-bondcliff-from-west-bond-nh,View of Bondcliff from West Bond - 10x20 Canvas,Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.,,y,Canvas,170.00

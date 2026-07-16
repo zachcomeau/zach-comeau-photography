@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function PrintsPage() {
   const prints = getStoreItems();
-  const fromPrices = await getFromPricesBySlug(prints.map((item) => item.slug));
+  const fromPrices = getFromPricesBySlug(prints.map((item) => item.slug));
 
   const sortedPrints = [...prints].sort((a, b) => {
     const priceA = fromPrices[a.slug] ?? Number.POSITIVE_INFINITY;

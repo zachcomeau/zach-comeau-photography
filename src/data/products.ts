@@ -7,7 +7,8 @@ export type PrintOffering = {
   label: string;
   description: string;
   medium: "print" | "canvas";
-  stripeProductId: string;
+  priceCents: number;
+  stripeProductId?: string;
   active: boolean;
 };
 
@@ -20,84 +21,93 @@ export type StoreConfig = {
 
 export const printOfferings: PrintOffering[] = [
   {
-    id: "prod_UtdLXpdehryKj5",
+    id: "franconia-ridge-sunrise-mt-lafayette-wmnf--franconia-ridge-sunrise-20x30-print",
     slug: "franconia-ridge-sunrise-mt-lafayette-wmnf",
     label: "Franconia Ridge Sunrise - 20x30 Print",
     description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
     medium: "print",
+    priceCents: 18000,
     stripeProductId: "prod_UtdLXpdehryKj5",
     active: true,
   },
   {
-    id: "prod_UtdKMrS5nWCc0n",
+    id: "franconia-ridge-sunrise-mt-lafayette-wmnf--franconia-ridge-sunrise-12x18-print",
     slug: "franconia-ridge-sunrise-mt-lafayette-wmnf",
     label: "Franconia Ridge Sunrise - 12x18 Print",
     description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
     medium: "print",
+    priceCents: 7000,
     stripeProductId: "prod_UtdKMrS5nWCc0n",
     active: true,
   },
   {
-    id: "prod_UtdJuBhkhlX3Hq",
+    id: "franconia-ridge-sunrise-mt-lafayette-wmnf--franconia-ridge-sunrise-8x12-print",
     slug: "franconia-ridge-sunrise-mt-lafayette-wmnf",
     label: "Franconia Ridge Sunrise - 8x12 Print",
     description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
     medium: "print",
+    priceCents: 1800,
     stripeProductId: "prod_UtdJuBhkhlX3Hq",
     active: true,
   },
   {
-    id: "prod_Utd4pRZptJXXzx",
+    id: "franconia-ridge-sunrise-mt-lafayette-wmnf--franconia-ridge-sunrise-12x18-canvas",
     slug: "franconia-ridge-sunrise-mt-lafayette-wmnf",
     label: "Franconia Ridge Sunrise - 12x18 Canvas",
     description: "Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.",
     medium: "canvas",
+    priceCents: 17500,
     stripeProductId: "prod_Utd4pRZptJXXzx",
     active: true,
   },
   {
-    id: "prod_UtaASU9VRlJGqP",
+    id: "franconia-ridge-sunrise-mt-lafayette-wmnf--franconia-ridge-sunrise-20x30-canvas",
     slug: "franconia-ridge-sunrise-mt-lafayette-wmnf",
     label: "Franconia Ridge Sunrise - 20x30 Canvas",
     description: "Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.",
     medium: "canvas",
+    priceCents: 27500,
     stripeProductId: "prod_UtaASU9VRlJGqP",
     active: true,
   },
   {
-    id: "prod_UtgFQpynA3vJhK",
+    id: "view-of-bondcliff-from-west-bond-nh--view-of-bondcliff-from-west-bond-12x24-print",
     slug: "view-of-bondcliff-from-west-bond-nh",
     label: "View of Bondcliff from West Bond - 12x24 Print",
     description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
     medium: "print",
-    stripeProductId: "prod_UtgFQpynA3vJhK",
+    priceCents: 9000,
+    stripeProductId: undefined,
     active: true,
   },
   {
-    id: "prod_UtgGg6AAJ34O1G",
+    id: "view-of-bondcliff-from-west-bond-nh--view-of-bondcliff-from-west-bond-10x20-print",
     slug: "view-of-bondcliff-from-west-bond-nh",
     label: "View of Bondcliff from West Bond - 10x20 Print",
     description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
     medium: "print",
-    stripeProductId: "prod_UtgGg6AAJ34O1G",
+    priceCents: 5000,
+    stripeProductId: undefined,
     active: true,
   },
   {
-    id: "prod_UtgHEWcQAxHqwL",
+    id: "view-of-bondcliff-from-west-bond-nh--view-of-bondcliff-from-west-bond-15x30-canvas",
     slug: "view-of-bondcliff-from-west-bond-nh",
     label: "View of Bondcliff from West Bond - 15x30 Canvas",
     description: "Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.",
     medium: "canvas",
-    stripeProductId: "prod_UtgHEWcQAxHqwL",
+    priceCents: 25000,
+    stripeProductId: undefined,
     active: true,
   },
   {
-    id: "prod_UtgItKGOwk5ZnJ",
+    id: "view-of-bondcliff-from-west-bond-nh--view-of-bondcliff-from-west-bond-10x20-canvas",
     slug: "view-of-bondcliff-from-west-bond-nh",
     label: "View of Bondcliff from West Bond - 10x20 Canvas",
     description: "Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.",
     medium: "canvas",
-    stripeProductId: "prod_UtgItKGOwk5ZnJ",
+    priceCents: 17000,
+    stripeProductId: undefined,
     active: true,
   }
 ];

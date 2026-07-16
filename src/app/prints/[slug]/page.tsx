@@ -43,7 +43,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!item || !item.inStore) notFound();
 
   const [offerings, shipping] = await Promise.all([
-    getResolvedOfferingsForSlug(slug),
+    Promise.resolve(getResolvedOfferingsForSlug(slug)),
     getShippingPrice(),
   ]);
 
