@@ -3,13 +3,27 @@
  * Sync data/photoLogCsv.csv, printOfferings.csv, and storeConfig.csv
  * into src/data/gallery.ts and src/data/products.ts
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { imageSize } from "image-size";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const dataDir = join(root, "data");
+const publicDir = join(root, "public");
+
+function readImageDimensions(imageSrc) {
+  const filePath = join(publicDir, imageSrc.replace(/^\//, ""));
+  if (!existsSync(filePath)) return {};
+  try {
+    const { width, height } = imageSize(readFileSync(filePath));
+    if (!width || !height) return {};
+    return { width, height };
+  } catch {
+    return {};
+  }
+}
 
 function parseCsv(text) {
   const rows = [];
@@ -164,6 +178,10 @@ function generateGalleryTs(items) {
       lines.push(`    keywords: ${formatStringArray(item.keywords)},`);
     }
     lines.push(`    imageSrc: "${item.imageSrc}",`);
+    if (item.width && item.height) {
+      lines.push(`    width: ${item.width},`);
+      lines.push(`    height: ${item.height},`);
+    }
     lines.push(`    featured: ${item.featured},`);
     lines.push(`    inGallery: ${item.inGallery},`);
     lines.push(`    inStore: ${item.inStore},`);
@@ -187,6 +205,8 @@ export type GalleryItem = {
   altText?: string;
   keywords?: string[];
   imageSrc: string;
+  width?: number;
+  height?: number;
   featured: boolean;
   inGallery: boolean;
   inStore: boolean;
@@ -359,6 +379,8 @@ function main() {
     const filename = rowField(row, "filename");
     const slug = filenameToSlug(filename);
     const category = parseCategory(row.categroy ?? "");
+    const imageSrc = imageSrcFor(filename, category);
+    const { width, height } = readImageDimensions(imageSrc);
 
     return {
       title: row.title,
@@ -373,7 +395,9 @@ function main() {
             .map((keyword) => keyword.trim())
             .filter(Boolean)
         : undefined,
-      imageSrc: imageSrcFor(filename, category),
+      imageSrc,
+      width,
+      height,
       featured: isYes(row["featured "] ?? row.featured ?? "n"),
       inGallery: isYes(row.gallery ?? "n"),
       inStore: isYes(row.store ?? "n"),

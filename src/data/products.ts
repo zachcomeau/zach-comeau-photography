@@ -77,7 +77,7 @@ export const printOfferings: PrintOffering[] = [
     description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
     medium: "print",
     priceCents: 9000,
-    stripeProductId: undefined,
+    stripeProductId: "prod_UtgFQpynA3vJhK",
     active: true,
   },
   {
@@ -87,7 +87,7 @@ export const printOfferings: PrintOffering[] = [
     description: "Fine Art Prints feature a subtle watercolor texture and a smooth matte finish",
     medium: "print",
     priceCents: 5000,
-    stripeProductId: undefined,
+    stripeProductId: "prod_UtgGg6AAJ34O1G",
     active: true,
   },
   {
@@ -97,7 +97,7 @@ export const printOfferings: PrintOffering[] = [
     description: "Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.",
     medium: "canvas",
     priceCents: 25000,
-    stripeProductId: undefined,
+    stripeProductId: "prod_UtgHEWcQAxHqwL",
     active: true,
   },
   {
@@ -107,7 +107,7 @@ export const printOfferings: PrintOffering[] = [
     description: "Canvas print on certified archival quality canvas wrapped around a 1.5” wood stretcher frame.",
     medium: "canvas",
     priceCents: 17000,
-    stripeProductId: undefined,
+    stripeProductId: "prod_UtgItKGOwk5ZnJ",
     active: true,
   }
 ];

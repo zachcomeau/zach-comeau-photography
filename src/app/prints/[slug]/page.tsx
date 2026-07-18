@@ -55,17 +55,29 @@ export default async function ProductPage({ params }: ProductPageProps) {
       >
         ← Back to prints
       </Link>
-      <div className="mt-8 grid gap-12 lg:grid-cols-2">
-        <div className="relative aspect-[4/3] bg-border">
-          {item.imageSrc ? (
+      <div className="mt-8 grid items-start gap-12 lg:grid-cols-2">
+        <div className="bg-border">
+          {item.imageSrc && item.width && item.height ? (
             <Image
               src={item.imageSrc}
               alt={item.altText ?? item.title}
-              fill
-              className="object-cover"
+              width={item.width}
+              height={item.height}
+              className="h-auto w-full"
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority
             />
+          ) : item.imageSrc ? (
+            <div className="relative aspect-[4/3]">
+              <Image
+                src={item.imageSrc}
+                alt={item.altText ?? item.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                priority
+              />
+            </div>
           ) : null}
         </div>
         <div>

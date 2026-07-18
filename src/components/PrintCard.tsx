@@ -14,19 +14,30 @@ export function PrintCard({ item, fromPriceCents }: PrintCardProps) {
       <div className="flex items-center gap-4">
         <Link
           href={`/prints/${item.slug}`}
-          className="group relative block h-20 w-28 shrink-0 overflow-hidden bg-border"
+          className="group block w-28 shrink-0 overflow-hidden bg-border"
           aria-label={`View print: ${item.title}`}
         >
-          {item.imageSrc ? (
+          {item.imageSrc && item.width && item.height ? (
             <Image
               src={item.imageSrc}
               alt={item.altText ?? item.title}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+              width={item.width}
+              height={item.height}
+              className="h-auto w-full transition-transform duration-500 group-hover:scale-[1.02]"
               sizes="112px"
             />
+          ) : item.imageSrc ? (
+            <div className="relative h-20 w-full">
+              <Image
+                src={item.imageSrc}
+                alt={item.altText ?? item.title}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                sizes="112px"
+              />
+            </div>
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-muted">—</div>
+            <div className="flex h-20 items-center justify-center text-xs text-muted">—</div>
           )}
         </Link>
         <div>
