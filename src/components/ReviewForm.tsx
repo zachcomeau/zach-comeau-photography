@@ -37,10 +37,40 @@ export function ReviewForm() {
         body: JSON.stringify(payload),
       });
 
-      const result = (await response.json()) as { error?: string; message?: string };
+      const result = (await response.json()) as {
+        error?: string;
+        message?: string;
+        details?: { name?: string; message?: string };
+      };
 
       if (!response.ok) {
-        setError(result.error ?? "Something went wrong. Please try again.");
+        const detail =
+          result.details?.name || result.details?.message
+            ? ` (${[result.details.name, result.details.message].filter(Boolean).join(": ")})`
+            : "";
+        setError((result.error ?? "Something went wrong. Please try again.") + detail);
+        // #region agent log
+        fetch("http://127.0.0.1:7353/ingest/00b64773-dd08-4901-bc6e-90665c3b9b6d", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "ea782e",
+          },
+          body: JSON.stringify({
+            sessionId: "ea782e",
+            runId: "save-error",
+            hypothesisId: "E",
+            location: "ReviewForm.tsx:handleSubmit",
+            message: "client received error",
+            data: {
+              status: response.status,
+              error: result.error ?? null,
+              details: result.details ?? null,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         setStatus("error");
         return;
       }
