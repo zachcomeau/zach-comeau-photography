@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { GalleryGrid } from "@/components/GalleryGrid";
+import { ReviewsSection } from "@/components/ReviewsSection";
 import { siteConfig } from "@/data/site";
 import { getHomepagePreviews } from "@/data/gallery";
+
+export const revalidate = 60;
 
 export default function Home() {
   const { gallery, store } = getHomepagePreviews();
@@ -52,6 +55,8 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      <ReviewsSection />
     </div>
   );
 }
