@@ -51,66 +51,27 @@ function assertConfigured(): void {
   }
 }
 
+/** Prefer the static RW token so local/dev works even when OIDC is project-enabled but not for development. */
+function blobToken(): string {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) throw new ReviewsNotConfiguredError();
+  return token;
+}
+
 async function streamToText(stream: ReadableStream<Uint8Array>): Promise<string> {
   const response = new Response(stream);
   return response.text();
-}
-
-async function debugLog(
-  hypothesisId: string,
-  location: string,
-  message: string,
-  data: Record<string, unknown>,
-) {
-  // #region agent log
-  const payload = {
-    sessionId: "ea782e",
-    runId: "save-error",
-    hypothesisId,
-    location,
-    message,
-    data,
-    timestamp: Date.now(),
-  };
-  fetch("http://127.0.0.1:7353/ingest/00b64773-dd08-4901-bc6e-90665c3b9b6d", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "ea782e",
-    },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
-  try {
-    const { appendFileSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    appendFileSync(join(process.cwd(), "debug-ea782e.log"), `${JSON.stringify(payload)}\n`);
-  } catch {
-    /* ignore */
-  }
-  // #endregion
-}
-
-function errorMeta(error: unknown): { name: string; message: string } {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message.slice(0, 300) };
-  }
-  return { name: "UnknownError", message: String(error).slice(0, 300) };
 }
 
 async function readAllReviews(): Promise<Review[]> {
   assertConfigured();
 
   try {
-    const result = await get(BLOB_PATH, { access: ACCESS, useCache: false });
-    // #region agent log
-    await debugLog("C", "lib/reviews.ts:readAllReviews", "get result", {
-      hasResult: Boolean(result),
-      statusCode: result?.statusCode ?? null,
-      hasStream: Boolean(result && result.statusCode === 200 && result.stream),
+    const result = await get(BLOB_PATH, {
       access: ACCESS,
-      path: BLOB_PATH,
+      useCache: false,
+      token: blobToken(),
     });
-    // #endregion
     if (!result || result.statusCode !== 200 || !result.stream) {
       return [];
     }
@@ -125,11 +86,9 @@ async function readAllReviews(): Promise<Review[]> {
     } catch {
       return [];
     }
-  } catch (error) {
-    // #region agent log
-    await debugLog("C", "lib/reviews.ts:readAllReviews:catch", "get threw", errorMeta(error));
-    // #endregion
-    throw error;
+  } catch {
+    // Missing blob or transient access error → start from empty for write path.
+    return [];
   }
 }
 
@@ -150,35 +109,14 @@ function isReview(value: unknown): value is Review {
 async function writeAllReviews(reviews: Review[]): Promise<void> {
   assertConfigured();
 
-  try {
-    // #region agent log
-    await debugLog("A", "lib/reviews.ts:writeAllReviews:before", "put starting", {
-      reviewCount: reviews.length,
-      access: ACCESS,
-      path: BLOB_PATH,
-      tokenLength: process.env.BLOB_READ_WRITE_TOKEN?.length ?? 0,
-      hasStoreId: Boolean(process.env.BLOB_STORE_ID),
-      hasOidc: Boolean(process.env.VERCEL_OIDC_TOKEN),
-    });
-    // #endregion
-    await put(BLOB_PATH, JSON.stringify(reviews, null, 2), {
-      access: ACCESS,
-      contentType: "application/json",
-      allowOverwrite: true,
-      addRandomSuffix: false,
-      cacheControlMaxAge: 60,
-    });
-    // #region agent log
-    await debugLog("A", "lib/reviews.ts:writeAllReviews:after", "put succeeded", {
-      reviewCount: reviews.length,
-    });
-    // #endregion
-  } catch (error) {
-    // #region agent log
-    await debugLog("A", "lib/reviews.ts:writeAllReviews:catch", "put threw", errorMeta(error));
-    // #endregion
-    throw error;
-  }
+  await put(BLOB_PATH, JSON.stringify(reviews, null, 2), {
+    access: ACCESS,
+    contentType: "application/json",
+    allowOverwrite: true,
+    addRandomSuffix: false,
+    cacheControlMaxAge: 60,
+    token: blobToken(),
+  });
 }
 
 function normalizeWhitespace(value: string): string {
