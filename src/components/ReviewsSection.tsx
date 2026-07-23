@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ReviewPhotoThumb } from "@/components/ReviewPhotoThumb";
 import { isReviewsConfigured, listApprovedReviews, type Review } from "@/lib/reviews";
 
 function StarRating({ rating }: { rating: number }) {
@@ -13,6 +14,7 @@ function StarRating({ rating }: { rating: number }) {
 function ReviewItem({ review }: { review: Review }) {
   return (
     <blockquote className="border-t border-border pt-8">
+      {review.photoPathname ? <ReviewPhotoThumb reviewId={review.id} /> : null}
       <StarRating rating={review.rating} />
       <p className="mt-4 text-base leading-7 text-muted sm:text-lg sm:leading-8">
         “{review.body}”

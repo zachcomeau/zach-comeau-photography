@@ -12,7 +12,7 @@ export default function ReviewsPage() {
       <PageHeader
         label="Reviews"
         title="Share your experience"
-        description="Bought a print or worked with me on a project? I’d love to hear how it went."
+        description="Bought a print or worked with me on a project? I’d love to hear how it went — and you’re welcome to share a photo of the print in your space."
       />
       <ReviewForm />
     </div>

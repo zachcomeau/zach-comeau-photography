@@ -1,4 +1,12 @@
 import { get, put } from "@vercel/blob";
+import {
+  ALLOWED_PHOTO_TYPES,
+  PHOTO_MAX_BYTES,
+  type PhotoContentType,
+} from "@/lib/review-photo";
+
+export type { PhotoContentType } from "@/lib/review-photo";
+export { PHOTO_MAX_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/review-photo";
 
 export type Review = {
   id: string;
@@ -8,6 +16,8 @@ export type Review = {
   body: string;
   approved: boolean;
   createdAt: string;
+  photoPathname?: string;
+  photoContentType?: PhotoContentType;
 };
 
 export type ReviewInput = {
@@ -17,6 +27,12 @@ export type ReviewInput = {
   body: string;
   /** Honeypot — must be empty if present */
   website?: string;
+};
+
+export type ReviewPhotoInput = {
+  data: ArrayBuffer;
+  contentType: PhotoContentType;
+  extension: "jpg" | "png";
 };
 
 const BLOB_PATH = "reviews.json";
@@ -92,6 +108,10 @@ async function readAllReviews(): Promise<Review[]> {
   }
 }
 
+function isPhotoContentType(value: unknown): value is PhotoContentType {
+  return value === "image/jpeg" || value === "image/png";
+}
+
 function isReview(value: unknown): value is Review {
   if (!value || typeof value !== "object") return false;
   const r = value as Record<string, unknown>;
@@ -102,7 +122,9 @@ function isReview(value: unknown): value is Review {
     typeof r.body === "string" &&
     typeof r.approved === "boolean" &&
     typeof r.createdAt === "string" &&
-    (r.location === undefined || typeof r.location === "string")
+    (r.location === undefined || typeof r.location === "string") &&
+    (r.photoPathname === undefined || typeof r.photoPathname === "string") &&
+    (r.photoContentType === undefined || isPhotoContentType(r.photoContentType))
   );
 }
 
@@ -123,7 +145,9 @@ function normalizeWhitespace(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
 
-export function validateReviewInput(input: ReviewInput): Omit<Review, "id" | "approved" | "createdAt"> {
+export function validateReviewInput(
+  input: ReviewInput,
+): Omit<Review, "id" | "approved" | "createdAt" | "photoPathname" | "photoContentType"> {
   if (input.website && input.website.trim()) {
     throw new ReviewValidationError("Invalid submission.");
   }
@@ -158,6 +182,28 @@ export function validateReviewInput(input: ReviewInput): Omit<Review, "id" | "ap
   return { name, location, rating, body };
 }
 
+/** Parse and validate a photo File; returns null if absent. */
+export async function readValidatedPhoto(file: File | null | undefined): Promise<ReviewPhotoInput | null> {
+  if (!file || file.size === 0) return null;
+
+  if (!ALLOWED_PHOTO_TYPES.includes(file.type as PhotoContentType)) {
+    throw new ReviewValidationError("Photo must be a JPG or PNG.");
+  }
+  if (file.size > PHOTO_MAX_BYTES) {
+    throw new ReviewValidationError("Photo must be 3 MB or smaller.");
+  }
+
+  const contentType = file.type as PhotoContentType;
+  const extension = contentType === "image/png" ? "png" : "jpg";
+  const data = await file.arrayBuffer();
+
+  if (data.byteLength > PHOTO_MAX_BYTES) {
+    throw new ReviewValidationError("Photo must be 3 MB or smaller.");
+  }
+
+  return { data, contentType, extension };
+}
+
 export async function listReviews(): Promise<Review[]> {
   const reviews = await readAllReviews();
   return reviews.sort(
@@ -170,15 +216,66 @@ export async function listApprovedReviews(): Promise<Review[]> {
   return reviews.filter((r) => r.approved);
 }
 
-export async function addReview(input: ReviewInput): Promise<Review> {
+export async function getReviewById(id: string): Promise<Review | null> {
+  const reviews = await readAllReviews();
+  return reviews.find((r) => r.id === id) ?? null;
+}
+
+export async function getReviewPhotoStream(
+  reviewId: string,
+): Promise<{ stream: ReadableStream<Uint8Array>; contentType: string } | null> {
+  const review = await getReviewById(reviewId);
+  if (!review?.photoPathname) return null;
+
+  const result = await get(review.photoPathname, {
+    access: ACCESS,
+    useCache: false,
+    token: blobToken(),
+  });
+  if (!result || result.statusCode !== 200 || !result.stream) return null;
+
+  return {
+    stream: result.stream,
+    contentType: review.photoContentType ?? "application/octet-stream",
+  };
+}
+
+async function putReviewPhoto(id: string, photo: ReviewPhotoInput): Promise<string> {
+  const pathname = `review-photos/${id}.${photo.extension}`;
+  await put(pathname, photo.data, {
+    access: ACCESS,
+    contentType: photo.contentType,
+    allowOverwrite: true,
+    addRandomSuffix: false,
+    cacheControlMaxAge: 60,
+    token: blobToken(),
+  });
+  return pathname;
+}
+
+export async function addReview(
+  input: ReviewInput,
+  photo?: ReviewPhotoInput | null,
+): Promise<Review> {
   const validated = validateReviewInput(input);
   const reviews = await readAllReviews();
+  const id = crypto.randomUUID();
+
+  let photoPathname: string | undefined;
+  let photoContentType: PhotoContentType | undefined;
+
+  if (photo) {
+    photoPathname = await putReviewPhoto(id, photo);
+    photoContentType = photo.contentType;
+  }
 
   const review: Review = {
-    id: crypto.randomUUID(),
+    id,
     ...validated,
     approved: false,
     createdAt: new Date().toISOString(),
+    photoPathname,
+    photoContentType,
   };
 
   reviews.push(review);

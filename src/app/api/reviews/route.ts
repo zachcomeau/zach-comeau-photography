@@ -4,6 +4,7 @@ import {
   ReviewValidationError,
   addReview,
   isReviewsConfigured,
+  readValidatedPhoto,
   type ReviewInput,
 } from "@/lib/reviews";
 
@@ -15,15 +16,33 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: ReviewInput;
+  const contentType = request.headers.get("content-type") ?? "";
+
+  let input: ReviewInput;
+  let photoFile: File | null = null;
+
   try {
-    body = (await request.json()) as ReviewInput;
+    if (contentType.includes("multipart/form-data")) {
+      const form = await request.formData();
+      const photo = form.get("photo");
+      photoFile = photo instanceof File ? photo : null;
+      input = {
+        name: String(form.get("name") ?? ""),
+        location: String(form.get("location") ?? ""),
+        rating: Number(form.get("rating")),
+        body: String(form.get("body") ?? ""),
+        website: String(form.get("website") ?? ""),
+      };
+    } else {
+      input = (await request.json()) as ReviewInput;
+    }
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
   try {
-    const review = await addReview(body);
+    const photo = await readValidatedPhoto(photoFile);
+    const review = await addReview(input, photo);
     return NextResponse.json(
       {
         id: review.id,

@@ -267,6 +267,14 @@ function ReviewGroup({
                 </p>
               </div>
               <p className="mt-3 text-base leading-7 text-muted">{review.body}</p>
+              {review.photoPathname ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`/api/reviews/photo/${review.id}`}
+                  alt=""
+                  className="mt-4 max-h-40 w-auto max-w-full object-cover"
+                />
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-3">
                 {!review.approved ? (
                   <button
